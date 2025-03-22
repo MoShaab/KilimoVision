@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "20286594572",
+    "project_id": "kilimovision",
+    "storage_bucket": "kilimovision.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:20286594572:android:ec8458695f22156d889829",
+        "android_client_info": {
+          "package_name": "com.example.kilimovision"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBPqA-FSZpdKZ-SmcpRH6kZcZ-xqpokOxY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
