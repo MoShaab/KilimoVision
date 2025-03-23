@@ -17,7 +17,6 @@ import com.example.kilimovision.model.Review
 import com.example.kilimovision.model.SellerProfile
 import com.example.kilimovision.model.User
 import com.example.kilimovision.viewmodel.ProfileViewModel
-import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -25,12 +24,13 @@ import java.util.*
 @Composable
 fun SellerProfileScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToAddProduct: () -> Unit,
+    onNavigateToAddProduct: (Any?) -> Unit,
     onNavigateToCreateAd: (String) -> Unit,
     profileViewModel: ProfileViewModel = viewModel()
 ) {
     val user by profileViewModel.userData.collectAsState()
     val sellerProfile by profileViewModel.sellerProfile.collectAsState()
+
     val sellerReviews by profileViewModel.sellerReviews.collectAsState()
     val isLoading by profileViewModel.isLoading.collectAsState()
     val error by profileViewModel.error.collectAsState()
@@ -50,6 +50,7 @@ fun SellerProfileScreen(
     var businessHours by remember { mutableStateOf("") }
     var website by remember { mutableStateOf("") }
     var establishedYear by remember { mutableStateOf("") }
+
 
     // Initialize form values from user data
     LaunchedEffect(user, sellerProfile) {
@@ -237,7 +238,11 @@ fun SellerProfileScreen(
                         onNavigateToCreateAd = {
                             sellerProfile?.userId?.let { onNavigateToCreateAd(it) }
                         },
-                        onNavigateToAddProduct = onNavigateToAddProduct
+                        onNavigateToAddProduct = {
+                            sellerProfile?.userId?.let { onNavigateToAddProduct(it) }
+
+
+                        }
                     )
                 }
             }

@@ -76,6 +76,7 @@ fun SellerDashboardScreen(
         }
     }
 
+
     // Fetch seller data
     LaunchedEffect(key1 = Unit) {
         val currentUser = FirebaseAuth.getInstance().currentUser
@@ -83,7 +84,7 @@ fun SellerDashboardScreen(
             try {
                 // Get seller profile
                 val db = FirebaseFirestore.getInstance()
-                val sellerDocs = db.collection("sellers")
+                val sellerDocs = db.collection("sellerProfiles")
                     .whereEqualTo("userId", currentUser.uid)
                     .limit(1)
                     .get()
@@ -293,7 +294,12 @@ fun SellerDashboardScreen(
                     0 -> OverviewTab(products.size, advertisements.size)
                     1 -> ProductsTab(
                         products = products,
-                        onAddProduct = { navController.navigate("add_product") }
+                        onAddProduct = {
+
+                            seller?.let {
+                                navController.navigate("add_product/${it.id}")
+                            }
+                        }
                     )
                     2 -> AdvertisementsTab(
                         advertisements = advertisements,

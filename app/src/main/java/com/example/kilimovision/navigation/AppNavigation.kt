@@ -2,7 +2,6 @@ package com.example.kilimovision.navigation
 
 import android.util.Log
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -12,7 +11,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.kilimovision.ui.screens.*
-import com.example.kilimovision.viewmodel.AuthState
 import com.example.kilimovision.viewmodel.AuthViewModel
 
 @Composable
@@ -200,16 +198,30 @@ fun AppNavigation() {
         // Seller profile
         composable("seller_profile") {
             SellerProfileScreen(
+
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToAddProduct = { navController.navigate("add_product") },
+                onNavigateToAddProduct = { sellerId ->
+                    navController.navigate("add_product/$sellerId") },
                 onNavigateToCreateAd = { sellerId ->
                     navController.navigate("create_advertisement/$sellerId")
                 }
             )
         }
 
-        composable("add_product") {
+        composable(
+            "add_product/{sellerId}",
+            arguments = listOf(navArgument("sellerId") { type = NavType.StringType })
+
+        ) {backStackEntry ->
+            val sellerId = backStackEntry.arguments?.getString("sellerId") ?: ""
             AddProductScreen(
+                sellerId = sellerId,
+                onBackPressed = {
+                    navController.popBackStack()
+                },
+                onProductCreated = {
+                    navController.popBackStack()
+                },
                 onNavigateBack = {
                     navController.popBackStack()
                 }

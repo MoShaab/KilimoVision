@@ -14,7 +14,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.kilimovision.repository.FirebaseRepository
+import com.example.kilimovision.viewmodel.AdvertisementViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
@@ -23,7 +25,10 @@ import kotlinx.coroutines.tasks.await
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddProductScreen(
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    sellerId: String,
+    onBackPressed: () -> Unit,
+    onProductCreated: () -> Unit
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -53,7 +58,7 @@ fun AddProductScreen(
         if (currentUser != null) {
             try {
                 val db = FirebaseFirestore.getInstance()
-                val sellerDocs = db.collection("sellers")
+                val sellerDocs = db.collection("sellerProfiles")
                     .whereEqualTo("userId", currentUser.uid)
                     .limit(1)
                     .get()
