@@ -30,7 +30,8 @@ fun SellerDashboardScreen(
     navController: NavController,
     onNavigateToProfile: () -> Unit = {}, // Default empty implementation for backward compatibility
     onLogout: () -> Unit,
-    onRedirectToLanding: () -> Unit = {}
+    onRedirectToLanding: () -> Unit = {},
+    onNavigateToRegister: () -> Unit = {}
 ) {
 
     val context = LocalContext.current
@@ -182,7 +183,9 @@ fun SellerDashboardScreen(
 
     Scaffold(
         topBar = {
+
             CenterAlignedTopAppBar(
+
                 title = {
                     Text(
                         "Seller Dashboard",
@@ -198,6 +201,11 @@ fun SellerDashboardScreen(
                         // Logout icon
                         Text("⚙️")
                     }
+                    IconButton(onClick =   onNavigateToRegister) {
+                        // Logout icon
+                        Text("®️")
+                    }
+
                 }
             )
         }

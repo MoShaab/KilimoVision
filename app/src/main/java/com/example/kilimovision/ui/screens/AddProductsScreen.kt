@@ -294,7 +294,8 @@ fun AddProductScreen(
                                 applicableDiseases = selectedDiseases.toList(),
                                 inStock = inStock,
                                 quantity = quantity.toIntOrNull() ?: 0,
-                                unitOfMeasure = unitOfMeasure
+                                unitOfMeasure = unitOfMeasure,
+                                region = "Nairobi"  // Added region parameter with default value
                             )
 
                             if (result.isSuccess) {

@@ -34,7 +34,7 @@ fun LoginScreen(
 ) {
     // Log for debugging
     Log.d("LoginScreen", "LoginScreen composable started with role: $role")
-    val repository = FirebaseRepository()
+    val repository = remember { FirebaseRepository() }
 
     // State
     var email by remember { mutableStateOf("") }
@@ -45,36 +45,48 @@ fun LoginScreen(
     val authState by authViewModel.authState.collectAsState()
     val userType by authViewModel.userType.collectAsState()
 
-    // Effect to handle authentication success and update user type
+    // Effect to handle authentication success
     LaunchedEffect(authState) {
         if (authState is AuthState.Authenticated) {
-
-//            // Set the user type based on the role
-//            Log.d("LoginScreen", "Authentication successful, updating user type to: $role")
-//            authViewModel.updateUserType(role)
-
-            // Create initial profile for the user if needed
             val userId = (authState as AuthState.Authenticated).userId
-            val userTypeResult = repository.getUserType(userId)
-            if (userTypeResult.isSuccess) {
-                   //val userType = userTypeResult.getOrNull() ?: "farmer"
-                userType?.let { onLoginSuccess(it) }
-            } else {
-                // Handle error
-                errorMessage = "Failed to retrieve account type"
+            Log.d("LoginScreen", "Authentication successful, userId: $userId")
+
+            var determinedUserType = role // Default to selected role
+
+            try {
+                repository.getCurrentUser().collect { user ->
+                    if (user != null) {
+                        determinedUserType = user.userType
+                        Log.d("LoginScreen", "Got user type from database: ${user.userType}")
+
+                        // Update AuthViewModel with the retrieved user type
+                        authViewModel.updateUserType(determinedUserType)
+
+                        // Create initial profile for the user if needed
+//                        if (role == "farmer") {
+//                            profileViewModel.createInitialFarmerProfile(userId, "Nairobi")
+//                        } else if (role == "seller") {
+//                            profileViewModel.createInitialSellerProfile(userId, "Your Business", "Nairobi")
+//                        }
+
+                        // Navigate with the determined user type
+                        onLoginSuccess(determinedUserType)
+                    } else {
+                        // User not found in database, use selected role
+                        Log.d("LoginScreen", "User not found in database, using selected role: $role")
+
+                        // Update AuthViewModel with the selected role
+                        authViewModel.updateUserType(role)
+
+                        // Navigate with the selected role
+                        onLoginSuccess(role)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("LoginScreen", "Error getting user: ${e.message}")
+                errorMessage = "Warning: Could not verify account type"
+                onLoginSuccess(role)
             }
-
-            if (role == "farmer") {
-                profileViewModel.createInitialFarmerProfile(userId, "Nairobi")
-            } else if (role == "seller") {
-                profileViewModel.createInitialSellerProfile(userId, "Your Business", "Nairobi")
-            }
-
-            // Add delay to give time for user type update
-            delay(500)
-
-            // Navigate with user type
-            onLoginSuccess(role)
         }
     }
 
@@ -114,6 +126,24 @@ fun LoginScreen(
             ) {
                 Text(
                     text = (authState as AuthState.Error).message,
+                    modifier = Modifier.padding(16.dp),
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+            }
+        }
+
+        // Custom error message
+        errorMessage?.let {
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+            ) {
+                Text(
+                    text = it,
                     modifier = Modifier.padding(16.dp),
                     color = MaterialTheme.colorScheme.onErrorContainer
                 )

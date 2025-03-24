@@ -108,8 +108,8 @@ fun AppNavigation() {
         composable(
             "seller_registration/{userId}",
             arguments = listOf(navArgument("userId") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val userId = backStackEntry.arguments?.getString("userId") ?: ""
+        ) {
+            val userId = authViewModel.getCurrentUserId() ?: ""
             SellerRegistrationScreen(
                 userId = userId,
                 onRegistrationComplete = {
@@ -175,6 +175,9 @@ fun AppNavigation() {
                 navController = navController,
                 onNavigateToProfile = {
                     navController.navigate("seller_profile")
+                },
+                onNavigateToRegister = {
+                    navController.navigate("seller_registration/{userId}")
                 },
 
                 onLogout = {

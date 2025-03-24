@@ -69,7 +69,8 @@ class AdvertisementViewModel : ViewModel() {
                     startDate = startDate,
                     endDate = endDate,
                     plan = plan,
-                    cost = cost
+                    cost = cost,
+                    region = "Nairobi"
                 )
 
                 if (result.isSuccess) {

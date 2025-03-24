@@ -1,15 +1,14 @@
 package com.example.kilimovision.repository
 
-import com.example.kilimovision.model.Advertisement
-import com.example.kilimovision.model.DiseaseTreatment
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.auth.FirebaseAuth
-import com.example.kilimovision.model.Seller
-import com.example.kilimovision.model.Product
+import android.util.Log
+import com.example.kilimovision.model.*
 import com.google.firebase.Timestamp
-import kotlinx.coroutines.tasks.await
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.tasks.await
 
 class FirebaseRepository {
     private val db = FirebaseFirestore.getInstance()
@@ -35,140 +34,265 @@ class FirebaseRepository {
                 "name" to name,
                 "email" to email,
                 "userType" to userType,
+                "phone" to "",
+                "region" to "Nairobi",
+                "address" to "",
+                "profilePicture" to "",
                 "createdAt" to Timestamp.now()
             )
 
             db.collection("users").document(userId).set(userData).await()
+
+//            // Initialize profile based on user type
+//            when (userType) {
+//                "farmer" -> {
+//                    val farmerProfile = FarmerProfile(
+//                        userId = userId,
+//                        region = "Nairobi"
+//                    )
+//                    createOrUpdateFarmerProfile(farmerProfile)
+//                }
+//                "seller" -> {
+//                    val sellerProfile = SellerProfile(
+//                        userId = userId,
+//                        region = "Nairobi",
+//                        businessName = name + "'s Shop",
+//                        subscription = SubscriptionDetails(
+//                            plan = "free",
+//                            startDate = Timestamp.now(),
+//                            endDate = Timestamp.now(),
+//                            features = listOf("Basic listing", "Standard visibility")
+//                        )
+//                    )
+//                    createOrUpdateSellerProfile(sellerProfile)
+//                }
+//            }
+
             Result.success(userId)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    // Get user type
-    suspend fun getUserType(userId: String): Result<String> {
-        return try {
-            val userDoc = db.collection("users").document(userId).get().await()
-            if (userDoc.exists()) {
-                Result.success(userDoc.getString("userType") ?: "farmer")
+    // User profile operations
+    suspend fun getCurrentUser(): Flow<User?> = flow {
+        try {
+            val userId = auth.currentUser?.uid ?: ""
+            if (userId.isNotEmpty()) {
+                val userDoc = db.collection("users").document(userId).get().await()
+                if (userDoc.exists()) {
+                    val user = User(
+                        id = userDoc.id,
+                        name = userDoc.getString("name") ?: "",
+                        email = userDoc.getString("email") ?: "",
+                        phone = userDoc.getString("phone") ?: "",
+                        userType = userDoc.getString("userType") ?: "",
+                        profilePicture = userDoc.getString("profilePicture") ?: "",
+                        createdAt = userDoc.getTimestamp("createdAt"),
+                        region = userDoc.getString("region") ?: "Nairobi",
+                        address = userDoc.getString("address") ?: ""
+                    )
+                    emit(user)
+                } else {
+                    emit(null)
+                }
             } else {
-                Result.failure(Exception("User document not found"))
+                emit(null)
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Log.e("FirebaseRepository", "Error getting current user: ${e.message}")
+            emit(null)
         }
     }
 
-    // Update user type
-    suspend fun updateUserType(userId: String, newUserType: String): Result<Boolean> {
+    suspend fun updateUser(user: User): Result<Boolean> {
         return try {
-            db.collection("users").document(userId)
-                .update("userType", newUserType)
-                .await()
+            val userData = hashMapOf(
+                "name" to user.name,
+                "email" to user.email,
+                "phone" to user.phone,
+                "region" to user.region,
+                "address" to user.address,
+                "profilePicture" to user.profilePicture,
+                "userType" to user.userType
+            )
+
+            db.collection("users").document(user.id).update(userData as Map<String, Any>).await()
             Result.success(true)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    // Get sellers by disease and region
-    fun getSellersByDiseaseAndRegion(
-        disease: String,
-        region: String
-    ): Flow<List<Seller>> = flow {
+    // Farmer profile operations
+    suspend fun getFarmerProfile(userId: String): Flow<FarmerProfile?> = flow {
         try {
-            // Get all products that treat this disease
-            val productsSnapshot = db.collection("products")
-                .whereArrayContains("applicableDiseases", disease)
-                .get()
-                .await()
+            val profileDoc = db.collection("farmerProfiles").document(userId).get().await()
 
-            // Get seller IDs that have products for this disease
-            val sellerIds = productsSnapshot.documents.map { it.getString("sellerId") }.toSet()
+            if (profileDoc.exists()) {
+                // Get consultation history
+                val consultationDocs = db.collection("farmerProfiles")
+                    .document(userId)
+                    .collection("consultations")
+                    .get()
+                    .await()
 
-            // If a specific region is selected (not "All Regions")
-            val sellersQuery = if (region != "All Regions") {
-                db.collection("sellers")
-                    .whereEqualTo("region", region)
-            } else {
-                db.collection("sellers")
-            }
-
-            // Get sellers
-            val sellersSnapshot = sellersQuery.get().await()
-
-            // Filter and map sellers
-            val sellers = sellersSnapshot.documents
-                .filter { it.id in sellerIds }
-                .map { doc ->
-                    // Get seller's products for this disease
-                    val products = productsSnapshot.documents
-                        .filter { it.getString("sellerId") == doc.id }
-                        .map { productDoc ->
-                            Product(
-                                id = productDoc.id,
-                                name = productDoc.getString("name") ?: "",
-                                disease = disease,
-                                price = productDoc.getDouble("price") ?: 0.0,
-                                availability = productDoc.getBoolean("inStock") ?: false
-                            )
-                        }
-
-                    Seller(
+                val consultations = consultationDocs.documents.map { doc ->
+                    Consultation(
                         id = doc.id,
-                        name = doc.getString("businessName") ?: "",
-                        address = doc.getString("address") ?: "",
-                        phone = doc.getString("phone") ?: "",
-                        distance = 0.0, // Not using distance calculation
-                        products = products
+                        disease = doc.getString("disease") ?: "",
+                        dateDiagnosed = doc.getTimestamp("dateDiagnosed"),
+                        cropAffected = doc.getString("cropAffected") ?: "",
+                        treatmentDetails = doc.getString("treatmentDetails") ?: "",
+                        sellerUsed = doc.getString("sellerUsed") ?: "",
+                        treatmentSuccess = doc.getBoolean("treatmentSuccess") ?: false,
+                        notes = doc.getString("notes") ?: ""
                     )
                 }
 
-            emit(sellers)
+                @Suppress("UNCHECKED_CAST")
+                val profile = FarmerProfile(
+                    userId = userId,
+                    farmName = profileDoc.getString("farmName") ?: "",
+                    farmSize = profileDoc.getDouble("farmSize") ?: 0.0,
+                    farmType = profileDoc.getString("farmType") ?: "",
+                    primaryCrops = (profileDoc.get("primaryCrops") as? List<String>) ?: emptyList(),
+                    region = profileDoc.getString("region") ?: "Nairobi",
+                    consultationHistory = consultations,
+                    preferredSellers = (profileDoc.get("preferredSellers") as? List<String>) ?: emptyList()
+                )
+
+                emit(profile)
+            } else {
+                emit(null)
+            }
         } catch (e: Exception) {
-            emit(emptyList())
+            Log.e("FirebaseRepository", "Error getting farmer profile: ${e.message}")
+            emit(null)
         }
     }
 
-    // Create seller profile with region
-    suspend fun createSellerProfile(
-        userId: String,
-        businessName: String,
-        address: String,
-        region: String,
-        phone: String,
-        email: String,
-        description: String
-    ): Result<String> {
+    suspend fun createOrUpdateFarmerProfile(profile: FarmerProfile): Result<Boolean> {
         return try {
-            val sellerData = hashMapOf(
-                "userId" to userId,
-                "businessName" to businessName,
-                "address" to address,
-                "region" to region,
-                "phone" to phone,
-                "email" to email,
-                "description" to description,
-                "profilePicture" to "",
-                "rating" to 0,
-                "verified" to false,
-                "createdAt" to Timestamp.now(),
-                "subscription" to hashMapOf(
-                    "plan" to "free",
-                    "startDate" to Timestamp.now(),
-                    "endDate" to Timestamp.now()
-                )
+            val profileData = hashMapOf(
+                "userId" to profile.userId,
+                "farmName" to profile.farmName,
+                "farmSize" to profile.farmSize,
+                "farmType" to profile.farmType,
+                "primaryCrops" to profile.primaryCrops,
+                "region" to profile.region,
+                "preferredSellers" to profile.preferredSellers
             )
 
-            val sellerRef = db.collection("sellers").document()
-            sellerRef.set(sellerData).await()
+            db.collection("farmerProfiles").document(profile.userId).set(profileData).await()
+            Result.success(true)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
-            // Update user type to ensure consistency
-            db.collection("users").document(userId)
-                .update("userType", "seller")
-                .await()
+    suspend fun addConsultation(userId: String, consultation: Consultation): Result<String> {
+        return try {
+            val consultationData = hashMapOf(
+                "disease" to consultation.disease,
+                "dateDiagnosed" to (consultation.dateDiagnosed ?: Timestamp.now()),
+                "cropAffected" to consultation.cropAffected,
+                "treatmentDetails" to consultation.treatmentDetails,
+                "sellerUsed" to consultation.sellerUsed,
+                "treatmentSuccess" to consultation.treatmentSuccess,
+                "notes" to consultation.notes
+            )
 
-            Result.success(sellerRef.id)
+            val consultationRef = db.collection("farmerProfiles")
+                .document(userId)
+                .collection("consultations")
+                .document()
+
+            consultationRef.set(consultationData).await()
+            Result.success(consultationRef.id)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // Seller profile operations
+    suspend fun getSellerProfile(userId: String): Flow<SellerProfile?> = flow {
+        try {
+            val profileDoc = db.collection("sellerProfiles").document(userId).get().await()
+
+            if (profileDoc.exists()) {
+                val subscription = profileDoc.get("subscription") as? Map<String, Any>
+
+                @Suppress("UNCHECKED_CAST")
+                val profile = SellerProfile(
+                    userId = profileDoc.id,
+                    businessName = profileDoc.getString("businessName") ?: "",
+                    businessAddress = profileDoc.getString("businessAddress") ?: "",
+                    region = profileDoc.getString("region") ?: "Nairobi",
+                    businessDescription = profileDoc.getString("businessDescription") ?: "",
+                    businessHours = profileDoc.getString("businessHours") ?: "8:00 AM - 5:00 PM",
+                    establishedYear = profileDoc.getLong("establishedYear")?.toInt() ?: 2020,
+                    website = profileDoc.getString("website") ?: "",
+                    socialMediaLinks = (profileDoc.get("socialMediaLinks") as? Map<String, String>) ?: emptyMap(),
+                    certifications = (profileDoc.get("certifications") as? List<String>) ?: emptyList(),
+                    specialties = (profileDoc.get("specialties") as? List<String>) ?: emptyList(),
+                    rating = profileDoc.getDouble("rating") ?: 0.0,
+                    reviewCount = profileDoc.getLong("reviewCount")?.toInt() ?: 0,
+                    verified = profileDoc.getBoolean("verified") ?: false,
+                    subscription = if (subscription != null) {
+                        SubscriptionDetails(
+                            plan = subscription["plan"] as? String ?: "free",
+                            startDate = subscription["startDate"] as? Timestamp,
+                            endDate = subscription["endDate"] as? Timestamp,
+                            autoRenew = subscription["autoRenew"] as? Boolean ?: false,
+                            features = (subscription["features"] as? List<String>) ?: emptyList()
+                        )
+                    } else null
+                )
+
+                emit(profile)
+            } else {
+                emit(null)
+            }
+        } catch (e: Exception) {
+            Log.e("FirebaseRepository", "Error getting seller profile: ${e.message}")
+            emit(null)
+        }
+    }
+
+    suspend fun createOrUpdateSellerProfile(profile: SellerProfile): Result<Boolean> {
+        return try {
+            val profileData = hashMapOf(
+                "userId" to profile.userId,
+                "businessName" to profile.businessName,
+                "businessAddress" to profile.businessAddress,
+                "region" to profile.region,
+                "businessDescription" to profile.businessDescription,
+                "businessHours" to profile.businessHours,
+                "establishedYear" to profile.establishedYear,
+                "website" to profile.website,
+                "socialMediaLinks" to profile.socialMediaLinks,
+                "certifications" to profile.certifications,
+                "specialties" to profile.specialties,
+                "rating" to profile.rating,
+                "reviewCount" to profile.reviewCount,
+                "verified" to profile.verified
+            )
+
+            // Add subscription data if available
+            profile.subscription?.let {
+                val subscriptionData = hashMapOf(
+                    "plan" to it.plan,
+                    "startDate" to (it.startDate ?: Timestamp.now()),
+                    "endDate" to (it.endDate ?: Timestamp.now()),
+                    "autoRenew" to it.autoRenew,
+                    "features" to it.features
+                )
+                profileData["subscription"] = subscriptionData
+            }
+
+            db.collection("sellerProfiles").document(profile.userId).set(profileData).await()
+            Result.success(true)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -185,7 +309,8 @@ class FirebaseRepository {
         applicableDiseases: List<String>,
         inStock: Boolean,
         quantity: Int,
-        unitOfMeasure: String
+        unitOfMeasure: String,
+        region: String
     ): Result<String> {
         return try {
             val productData = hashMapOf(
@@ -200,6 +325,7 @@ class FirebaseRepository {
                 "inStock" to inStock,
                 "quantity" to quantity,
                 "unitOfMeasure" to unitOfMeasure,
+                "region" to region,
                 "featured" to false,
                 "createdAt" to Timestamp.now()
             )
@@ -212,29 +338,136 @@ class FirebaseRepository {
         }
     }
 
-    // Get products by seller
-    suspend fun getProductsBySeller(sellerId: String): Flow<List<Product>> = flow {
+    suspend fun getProducts(sellerId: String): Flow<List<Product>> = flow {
         try {
-            val products = db.collection("products")
+            val productsSnapshot = db.collection("products")
                 .whereEqualTo("sellerId", sellerId)
                 .get()
                 .await()
-                .documents
-                .map { doc ->
-                    Product(
-                        id = doc.id,
-                        sellerId = doc.getString("sellerId") ?: "",
-                        name = doc.getString("name") ?: "",
-                        description = doc.getString("description") ?: "",
-                        price = doc.getDouble("price") ?: 0.0,
-                        discount = doc.getDouble("discount") ?: 0.0,
-                        inStock = doc.getBoolean("inStock") ?: false,
-                        quantity = doc.getLong("quantity")?.toInt() ?: 0
-                    )
-                }
+
+            val products = productsSnapshot.documents.map { doc ->
+                @Suppress("UNCHECKED_CAST")
+                Product(
+                    id = doc.id,
+                    sellerId = doc.getString("sellerId") ?: "",
+                    name = doc.getString("name") ?: "",
+                    description = doc.getString("description") ?: "",
+                    price = doc.getDouble("price") ?: 0.0,
+                    discount = doc.getDouble("discount") ?: 0.0,
+                    images = (doc.get("images") as? List<String>) ?: emptyList(),
+                    category = doc.getString("category") ?: "",
+                    applicableDiseases = (doc.get("applicableDiseases") as? List<String>) ?: emptyList(),
+                    inStock = doc.getBoolean("inStock") ?: false,
+                    quantity = doc.getLong("quantity")?.toInt() ?: 0,
+                    unitOfMeasure = doc.getString("unitOfMeasure") ?: "",
+                    featured = doc.getBoolean("featured") ?: false,
+                    createdAt = doc.getTimestamp("createdAt")
+                )
+            }
 
             emit(products)
         } catch (e: Exception) {
+            Log.e("FirebaseRepository", "Error getting products: ${e.message}")
+            emit(emptyList())
+        }
+    }
+
+    // Get products for disease and region
+    suspend fun getProductsForDiseaseAndRegion(disease: String, region: String): Flow<List<Product>> = flow {
+        try {
+            val query = if (region != "All Regions") {
+                db.collection("products")
+                    .whereArrayContains("applicableDiseases", disease)
+                    .whereEqualTo("region", region)
+            } else {
+                db.collection("products")
+                    .whereArrayContains("applicableDiseases", disease)
+            }
+
+            val productsSnapshot = query.get().await()
+
+            val products = productsSnapshot.documents.map { doc ->
+                @Suppress("UNCHECKED_CAST")
+                Product(
+                    id = doc.id,
+                    sellerId = doc.getString("sellerId") ?: "",
+                    name = doc.getString("name") ?: "",
+                    description = doc.getString("description") ?: "",
+                    price = doc.getDouble("price") ?: 0.0,
+                    discount = doc.getDouble("discount") ?: 0.0,
+                    images = (doc.get("images") as? List<String>) ?: emptyList(),
+                    category = doc.getString("category") ?: "",
+                    applicableDiseases = (doc.get("applicableDiseases") as? List<String>) ?: emptyList(),
+                    inStock = doc.getBoolean("inStock") ?: false,
+                    quantity = doc.getLong("quantity")?.toInt() ?: 0,
+                    unitOfMeasure = doc.getString("unitOfMeasure") ?: "",
+                    featured = doc.getBoolean("featured") ?: false,
+                    createdAt = doc.getTimestamp("createdAt")
+                )
+            }
+
+            emit(products)
+        } catch (e: Exception) {
+            Log.e("FirebaseRepository", "Error getting products for disease: ${e.message}")
+            emit(emptyList())
+        }
+    }
+
+    // Get sellers by disease and region
+    suspend fun getSellersByDiseaseAndRegion(disease: String, region: String): Flow<List<Seller>> = flow {
+        try {
+            // Get all products that treat this disease in the specified region
+            val products = mutableListOf<Product>()
+            getProductsForDiseaseAndRegion(disease, region).collect {
+                products.addAll(it)
+            }
+
+            // Get seller IDs that have products for this disease
+            val sellerIds = products.map { it.sellerId }.toSet()
+
+            // If empty, return empty list
+            if (sellerIds.isEmpty()) {
+                emit(emptyList())
+                return@flow
+            }
+
+            // Fetch sellers by IDs
+            val sellersSnapshot = db.collection("sellerProfiles")
+                .whereIn(com.google.firebase.firestore.FieldPath.documentId(), sellerIds.toList())
+                .get()
+                .await()
+
+            // Group products by seller
+            val productsBySeller = products.groupBy { it.sellerId }
+
+            // Map seller documents to Seller objects
+            val sellers = sellersSnapshot.documents.mapNotNull { doc ->
+                val sellerId = doc.id
+                val sellerProducts = productsBySeller[sellerId] ?: emptyList()
+
+                if (sellerProducts.isEmpty()) return@mapNotNull null
+
+                Seller(
+                    id = sellerId,
+                    name = doc.getString("businessName") ?: "",
+                    address = doc.getString("businessAddress") ?: "",
+                    phone = doc.getString("phone") ?: "",
+                    distance = 0.0, // Not using distance
+                    products = sellerProducts.map { product ->
+                        Product(
+                            id = product.id,
+                            name = product.name,
+                            disease = disease,
+                            price = product.price,
+                            availability = product.inStock
+                        )
+                    }
+                )
+            }
+
+            emit(sellers)
+        } catch (e: Exception) {
+            Log.e("FirebaseRepository", "Error finding sellers: ${e.message}")
             emit(emptyList())
         }
     }
@@ -249,7 +482,8 @@ class FirebaseRepository {
         startDate: Timestamp,
         endDate: Timestamp,
         plan: String,
-        cost: Double
+        cost: Double,
+        region: String
     ): Result<String> {
         return try {
             val adData = hashMapOf(
@@ -266,6 +500,7 @@ class FirebaseRepository {
                 "plan" to plan,
                 "cost" to cost,
                 "paymentStatus" to "pending",
+                "region" to region,
                 "createdAt" to Timestamp.now()
             )
 
@@ -277,28 +512,45 @@ class FirebaseRepository {
         }
     }
 
-    // Get advertisements for a disease
-    suspend fun getAdvertisementsForDisease(disease: String): Flow<List<Advertisement>> = flow {
+    // Get advertisements for a disease in a region
+    suspend fun getAdvertisementsForDiseaseAndRegion(disease: String, region: String): Flow<List<Advertisement>> = flow {
         try {
-            val ads = db.collection("advertisements")
-                .whereArrayContains("targetDiseases", disease)
-                .whereEqualTo("status", "active")
-                .whereGreaterThan("endDate", Timestamp.now())
-                .get()
-                .await()
-                .documents
-                .map { doc ->
-                    Advertisement(
-                        id = doc.id,
-                        title = doc.getString("title") ?: "",
-                        description = doc.getString("description") ?: "",
-                        imageUrl = doc.getString("image") ?: "",
-                        sellerId = doc.getString("sellerId") ?: ""
-                    )
-                }
+            val query = if (region != "All Regions") {
+                db.collection("advertisements")
+                    .whereArrayContains("targetDiseases", disease)
+                    .whereEqualTo("region", region)
+                    .whereEqualTo("status", "active")
+                    .whereGreaterThan("endDate", Timestamp.now())
+            } else {
+                db.collection("advertisements")
+                    .whereArrayContains("targetDiseases", disease)
+                    .whereEqualTo("status", "active")
+                    .whereGreaterThan("endDate", Timestamp.now())
+            }
+
+            val ads = query.get().await().documents.map { doc ->
+                Advertisement(
+                    id = doc.id,
+                    sellerId = doc.getString("sellerId") ?: "",
+                    title = doc.getString("title") ?: "",
+                    description = doc.getString("description") ?: "",
+                    imageUrl = doc.getString("image") ?: "",
+                    targetDiseases = (doc.get("targetDiseases") as? List<String>) ?: emptyList(),
+                    startDate = doc.getTimestamp("startDate"),
+                    endDate = doc.getTimestamp("endDate"),
+                    status = doc.getString("status") ?: "",
+                    impressions = doc.getLong("impressions")?.toInt() ?: 0,
+                    clicks = doc.getLong("clicks")?.toInt() ?: 0,
+                    plan = doc.getString("plan") ?: "",
+                    cost = doc.getDouble("cost") ?: 0.0,
+                    paymentStatus = doc.getString("paymentStatus") ?: "",
+                    createdAt = doc.getTimestamp("createdAt")
+                )
+            }
 
             emit(ads)
         } catch (e: Exception) {
+            Log.e("FirebaseRepository", "Error getting advertisements: ${e.message}")
             emit(emptyList())
         }
     }
@@ -363,6 +615,81 @@ class FirebaseRepository {
         }
     }
 
+    // Review operations
+    suspend fun addReview(review: Review): Result<String> {
+        return try {
+            val reviewData = hashMapOf(
+                "sellerId" to review.sellerId,
+                "farmerId" to review.farmerId,
+                "rating" to review.rating,
+                "comment" to review.comment,
+                "date" to (review.date ?: Timestamp.now()),
+                "productPurchased" to review.productPurchased,
+                "verified" to review.verified
+            )
+
+            val reviewRef = db.collection("reviews").document()
+            reviewRef.set(reviewData).await()
+
+            // Update seller's rating
+            updateSellerRating(review.sellerId)
+
+            Result.success(reviewRef.id)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getReviewsForSeller(sellerId: String): Flow<List<Review>> = flow {
+        try {
+            val reviewsSnapshot = db.collection("reviews")
+                .whereEqualTo("sellerId", sellerId)
+                .orderBy("date", Query.Direction.DESCENDING)
+                .get()
+                .await()
+
+            val reviews = reviewsSnapshot.documents.map { doc ->
+                Review(
+                    id = doc.id,
+                    sellerId = doc.getString("sellerId") ?: "",
+                    farmerId = doc.getString("farmerId") ?: "",
+                    rating = doc.getLong("rating")?.toInt() ?: 0,
+                    comment = doc.getString("comment") ?: "",
+                    date = doc.getTimestamp("date"),
+                    productPurchased = doc.getString("productPurchased") ?: "",
+                    verified = doc.getBoolean("verified") ?: false
+                )
+            }
+
+            emit(reviews)
+        } catch (e: Exception) {
+            Log.e("FirebaseRepository", "Error getting reviews: ${e.message}")
+            emit(emptyList())
+        }
+    }
+
+    // Helper to update seller rating when a new review is added
+    private suspend fun updateSellerRating(sellerId: String) {
+        try {
+            val reviewsSnapshot = db.collection("reviews")
+                .whereEqualTo("sellerId", sellerId)
+                .get()
+                .await()
+
+            val ratings = reviewsSnapshot.documents.mapNotNull { it.getLong("rating")?.toInt() }
+            val avgRating = if (ratings.isNotEmpty()) ratings.average() else 0.0
+
+            db.collection("sellerProfiles").document(sellerId)
+                .update(
+                    "rating", avgRating,
+                    "reviewCount", ratings.size
+                )
+                .await()
+        } catch (e: Exception) {
+            Log.e("FirebaseRepository", "Error updating seller rating: ${e.message}")
+        }
+    }
+
     // Disease treatment information
     suspend fun getDiseaseTreatmentInfo(diseaseName: String): Flow<DiseaseTreatment?> = flow {
         try {
@@ -375,11 +702,13 @@ class FirebaseRepository {
 
             if (treatmentDocs.isNotEmpty()) {
                 val doc = treatmentDocs[0]
+                @Suppress("UNCHECKED_CAST")
                 val treatment = DiseaseTreatment(
                     id = doc.id,
                     name = doc.getString("diseaseName") ?: "",
                     description = doc.getString("description") ?: "",
                     symptoms = (doc.get("symptoms") as? List<String>) ?: listOf(),
+                    recommendedProducts = (doc.get("recommendedProducts") as? List<String>) ?: listOf(),
                     preventionTips = (doc.get("preventionTips") as? List<String>) ?: listOf(),
                     imageUrl = doc.getString("imageUrl") ?: ""
                 )
@@ -388,111 +717,8 @@ class FirebaseRepository {
                 emit(null)
             }
         } catch (e: Exception) {
+            Log.e("FirebaseRepository", "Error getting disease treatment: ${e.message}")
             emit(null)
-        }
-    }
-
-    // Check if user is a seller
-    suspend fun checkIsSeller(userId: String): Result<Boolean> {
-        return try {
-            val sellerDocs = db.collection("sellers")
-                .whereEqualTo("userId", userId)
-                .limit(1)
-                .get()
-                .await()
-
-            Result.success(!sellerDocs.isEmpty)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    // Initialize disease treatments
-    suspend fun initializeDiseaseTreatments() {
-        val treatments = listOf(
-            hashMapOf(
-                "diseaseName" to "Tomato___Early_blight",
-                "description" to "Early blight is a fungal disease that affects tomato plants. It's characterized by brown spots with concentric rings that appear on lower leaves first and can spread upward.",
-                "symptoms" to listOf(
-                    "Dark brown spots with concentric rings",
-                    "Yellowing of leaves around spots",
-                    "Lower leaves affected first",
-                    "Leaf drop in severe cases"
-                ),
-                "preventionTips" to listOf(
-                    "Rotate crops every 2-3 years",
-                    "Remove and destroy infected plant debris",
-                    "Water at the base of plants to keep foliage dry",
-                    "Ensure good air circulation between plants",
-                    "Apply organic fungicides preventatively"
-                ),
-                "imageUrl" to ""
-            ),
-            hashMapOf(
-                "diseaseName" to "Tomato___Late_blight",
-                "description" to "Late blight is a destructive disease caused by the fungus-like organism Phytophthora infestans. It can destroy plants within days and spreads rapidly in cool, wet conditions.",
-                "symptoms" to listOf(
-                    "Dark, water-soaked spots on leaves",
-                    "White fuzzy growth on leaf undersides in humid conditions",
-                    "Brown lesions on stems",
-                    "Firm, dark, greasy spots on fruit"
-                ),
-                "preventionTips" to listOf(
-                    "Use resistant varieties when available",
-                    "Improve air circulation",
-                    "Remove volunteer tomato and potato plants",
-                    "Apply fungicides preventatively during cool, wet weather",
-                    "Destroy infected plants immediately"
-                ),
-                "imageUrl" to ""
-            ),
-            hashMapOf(
-                "diseaseName" to "Tomato___Leaf_Mold",
-                "description" to "Leaf mold is a fungal disease that primarily affects tomato plants in high humidity environments, especially in greenhouses.",
-                "symptoms" to listOf(
-                    "Pale green or yellowish spots on upper leaf surfaces",
-                    "Olive-green to grayish-purple velvety mold on leaf undersides",
-                    "Leaves curling, withering and dropping",
-                    "Reduced fruit yield"
-                ),
-                "preventionTips" to listOf(
-                    "Space plants for good air circulation",
-                    "Use drip irrigation instead of overhead watering",
-                    "Prune lower leaves and suckers",
-                    "Remove and destroy infected plants",
-                    "Control greenhouse humidity"
-                ),
-                "imageUrl" to ""
-            ),
-            hashMapOf(
-                "diseaseName" to "Tomato___Bacterial_spot",
-                "description" to "Bacterial spot is caused by several Xanthomonas species and affects tomatoes and peppers. It can cause significant yield losses in warm, humid conditions.",
-                "symptoms" to listOf(
-                    "Small, dark, water-soaked spots on leaves, stems and fruit",
-                    "Spots enlarge and turn brown with a yellow halo",
-                    "Leaf spots may merge, causing leaf blight",
-                    "Fruit spots are raised and scabby"
-                ),
-                "preventionTips" to listOf(
-                    "Use disease-free seeds and transplants",
-                    "Rotate crops with non-host plants",
-                    "Avoid overhead irrigation",
-                    "Remove and destroy infected debris",
-                    "Apply copper-based bactericides preventatively"
-                ),
-                "imageUrl" to ""
-            )
-        )
-
-        for (treatment in treatments) {
-            val existingDocs = db.collection("diseaseTreatments")
-                .whereEqualTo("diseaseName", treatment["diseaseName"])
-                .get()
-                .await()
-
-            if (existingDocs.isEmpty) {
-                db.collection("diseaseTreatments").add(treatment).await()
-            }
         }
     }
 }

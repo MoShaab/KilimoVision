@@ -44,16 +44,16 @@ fun RegisterScreen(
             // Set the user type based on the role
             authViewModel.updateUserType(role)
 
-            // Create initial profile for the user
-            val userId = (authState as AuthState.Authenticated).userId
-            if (role == "farmer") {
-                profileViewModel.createInitialFarmerProfile(userId, "Nairobi")
-            } else if (role == "seller") {
-                profileViewModel.createInitialSellerProfile(userId, "Your Business", "Nairobi")
-            }
-
-            // Add delay to ensure profile is created
-            delay(500)
+//            // Create initial profile for the user
+//            val userId = (authState as AuthState.Authenticated).userId
+//            if (role == "farmer") {
+//                profileViewModel.createInitialFarmerProfile(userId, "Nairobi")
+//            } else if (role == "seller") {
+//                profileViewModel.createInitialSellerProfile(userId, "Your Business", "Nairobi")
+//            }
+//
+//            // Add delay to ensure profile is created
+//            delay(500)
 
             onRegisterSuccess()
         }

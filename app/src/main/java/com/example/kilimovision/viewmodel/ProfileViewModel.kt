@@ -233,18 +233,18 @@ class ProfileViewModel : ViewModel() {
         updateFarmerProfile(initialProfile)
     }
 
-    // Create initial seller profile
-    fun createInitialSellerProfile(userId: String, businessName: String, region: String) {
-        val initialProfile = SellerProfile(
-            userId = userId,
-            businessName = businessName,
-            region = region,
-            subscription = SubscriptionDetails(
-                plan = "free",
-                features = listOf("Basic product listings", "Standard visibility")
-            )
-        )
-
-        updateSellerProfile(initialProfile)
-    }
+//    // Create initial seller profile
+//    fun createInitialSellerProfile(userId: String, businessName: String, region: String) {
+//        val initialProfile = SellerProfile(
+//            userId = userId,
+//            businessName = businessName,
+//            region = region,
+//            subscription = SubscriptionDetails(
+//                plan = "free",
+//                features = listOf("Basic product listings", "Standard visibility")
+//            )
+//        )
+//
+//        updateSellerProfile(initialProfile)
+//    }
 }

@@ -36,6 +36,15 @@ class SellerViewModel : ViewModel() {
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
+    // Current region state
+    private val _currentRegion = MutableStateFlow("All Regions")
+    val currentRegion: StateFlow<String> = _currentRegion
+
+    // Set region
+    fun setRegion(region: String) {
+        _currentRegion.value = region
+    }
+
     // Get sellers by disease and region
     fun fetchSellersByDiseaseAndRegion(disease: String, region: String = "All Regions") {
         viewModelScope.launch {
@@ -58,11 +67,11 @@ class SellerViewModel : ViewModel() {
         }
     }
 
-    // Get advertisements for a disease
-    fun fetchAdvertisementsForDisease(disease: String) {
+    // Get advertisements for a disease and region (updated to match new repository method)
+    fun fetchAdvertisementsForDisease(disease: String, region: String = "All Regions") {
         viewModelScope.launch {
             try {
-                repository.getAdvertisementsForDisease(disease).collect { ads ->
+                repository.getAdvertisementsForDiseaseAndRegion(disease, region).collect { ads ->
                     _advertisements.value = ads
                 }
             } catch (e: Exception) {
@@ -82,5 +91,13 @@ class SellerViewModel : ViewModel() {
                 _error.value = "Error loading disease information: ${e.message}"
             }
         }
+    }
+
+    // Combined fetch method for convenience
+    fun fetchAllDataForDisease(disease: String, region: String = "All Regions") {
+        _currentRegion.value = region
+        fetchSellersByDiseaseAndRegion(disease, region)
+        fetchAdvertisementsForDisease(disease, region)
+        fetchDiseaseTreatmentInfo(disease)
     }
 }

@@ -1,6 +1,7 @@
 package com.example.kilimovision.ui.screens
 
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -44,6 +45,8 @@ fun SellerRegistrationScreen(
 
     // Region selection dropdown state
     var expanded by remember { mutableStateOf(false) }
+
+    Log.d("SellerRegistrationScreen", "Rendering with userId: $userId")
 
     Scaffold(
         topBar = {
@@ -207,23 +210,54 @@ fun SellerRegistrationScreen(
 
                     coroutineScope.launch {
                         try {
-                            val result = repository.createSellerProfile(
+                            Log.d("SellerRegistration", "Creating seller profile for userId: $userId")
+
+                            // Create SellerProfile object using the updated model structure
+                            val sellerProfile = com.example.kilimovision.model.SellerProfile(
                                 userId = userId,
                                 businessName = businessName,
-                                address = address,
+                                businessAddress = address,
                                 region = selectedRegion,
-                                phone = phone,
-                                email = email,
-                                description = description
+                                businessDescription = description,
+                                businessHours = "8:00 AM - 5:00 PM",  // Default value
+                                establishedYear = 2023,  // Default value
+                                website = "",
+                                socialMediaLinks = emptyMap(),
+                                certifications = emptyList(),
+                                specialties = emptyList(),
+                                rating = 0.0,
+                                reviewCount = 0,
+                                verified = false,
+                                subscription = com.example.kilimovision.model.SubscriptionDetails(
+                                    plan = "free",
+                                    startDate = com.google.firebase.Timestamp.now(),
+                                    endDate = com.google.firebase.Timestamp.now(),
+                                    autoRenew = false,
+                                    features = listOf("Basic listing", "Standard visibility")
+                                )
                             )
 
+                            // Call the updated createOrUpdateSellerProfile method
+                            val result = repository.createOrUpdateSellerProfile(sellerProfile)
+
                             if (result.isSuccess) {
+                                Log.d("SellerRegistration", "Profile created successfully")
                                 Toast.makeText(context, "Registration successful!", Toast.LENGTH_SHORT).show()
-                                onRegistrationComplete()
+
+                                // Update user document to ensure userType is set to "seller"
+                                repository.getCurrentUser().collect { user ->
+                                    if (user != null) {
+                                        val updatedUser = user.copy(userType = "seller")
+                                        repository.updateUser(updatedUser)
+                                    }
+                                    onRegistrationComplete()
+                                }
                             } else {
+                                Log.e("SellerRegistration", "Failed to create profile: ${result.exceptionOrNull()?.message}")
                                 errorMessage = result.exceptionOrNull()?.message ?: "Registration failed"
                             }
                         } catch (e: Exception) {
+                            Log.e("SellerRegistration", "Error creating profile: ${e.message}", e)
                             errorMessage = "Registration error: ${e.message}"
                         } finally {
                             isLoading = false

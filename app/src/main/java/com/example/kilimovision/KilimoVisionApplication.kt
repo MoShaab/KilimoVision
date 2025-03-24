@@ -35,7 +35,7 @@ class KilimoVisionApplication : Application() {
                 val repository = FirebaseRepository()
 
                 // Initialize disease treatments data
-                repository.initializeDiseaseTreatments()
+//                repository.getDiseaseTreatmentInfo()
 
                 Log.d("KilimoVisionApp", "Application data initialization complete")
             } catch (e: Exception) {
