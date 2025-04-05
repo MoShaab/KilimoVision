@@ -126,6 +126,28 @@ fun AppNavigation() {
             )
         }
 
+
+        composable(
+            "farmer_registration/{userId}",
+            arguments = listOf(navArgument("userId") { type = NavType.StringType })
+        ) {
+            val userId = authViewModel.getCurrentUserId() ?: ""
+            FarmerRegistrationScreen(
+                userId = userId,
+                onRegistrationComplete = {
+                    navController.navigate("farmer_main") {
+                        popUpTo("farmer_registration/$userId") { inclusive = true }
+                    }
+                },
+                onCancelRegistration = {
+                    authViewModel.signOut() // Sign out if registration is cancelled
+                    navController.navigate("landing") {
+                        popUpTo("farmer_registration/$userId") { inclusive = true }
+                    }
+                }
+            )
+        }
+
         // Farmer main screen
         composable("farmer_main") {
             FarmerMainScreen(
@@ -134,6 +156,9 @@ fun AppNavigation() {
                 },
                 onNavigateToProfile = {
                     navController.navigate("farmer_profile")
+                },
+                onNavigateToRegister = {
+                    navController.navigate("farmer_registration/{userId}")
                 },
                 onLogout = {
                     authViewModel.signOut()

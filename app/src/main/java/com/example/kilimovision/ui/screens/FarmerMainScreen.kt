@@ -34,6 +34,7 @@ fun FarmerMainScreen(
     onNavigateToSellers: (String) -> Unit,
     onNavigateToProfile: () -> Unit,
     onLogout: () -> Unit,
+    onNavigateToRegister: () -> Unit  ={},
     onRedirectToLanding: () -> Unit = {} // Made optional with default implementation for backward compatibility
 ) {
     val context = LocalContext.current
@@ -159,6 +160,11 @@ fun FarmerMainScreen(
                     // Logout button
                     IconButton(onClick = onLogout) {
                         Text("⚙️")
+                    }
+                    //Register Icon
+                    IconButton(onClick =   onNavigateToRegister) {
+                        // Logout icon
+                        Text("®️")
                     }
                 }
             )

@@ -15,7 +15,10 @@ import com.example.kilimovision.model.Consultation
 import com.example.kilimovision.model.FarmerProfile
 import com.example.kilimovision.model.User
 import com.example.kilimovision.viewmodel.ProfileViewModel
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import kotlinx.coroutines.launch
+import androidx.compose.ui.window.Dialog
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -371,23 +374,23 @@ fun FarmerProfileScreen(
     }
 
 //    // Consultation dialog
-//    if (showConsultationDialog) {
-//        AddConsultationDialog(
-//            onDismiss = { showConsultationDialog = false },
-//            onAddConsultation = { disease, crop, treatment, seller, success, notes ->
-//                val consultation = Consultation(
-//                    disease = disease,
-//                    cropAffected = crop,
-//                    treatmentDetails = treatment,
-//                    sellerUsed = seller,
-//                    treatmentSuccess = success,
-//                    notes = notes
-//                )
-//                profileViewModel.addConsultation(consultation)
-//                showConsultationDialog = false
-//            }
-//        )
-//    }
+    if (showConsultationDialog) {
+        AddConsultationDialog(
+            onDismiss = { showConsultationDialog = false },
+            onAddConsultation = { disease, crop, treatment, seller, success, notes ->
+                val consultation = Consultation(
+                    disease = disease,
+                    cropAffected = crop,
+                    treatmentDetails = treatment,
+                    sellerUsed = seller,
+                    treatmentSuccess = success,
+                    notes = notes
+                )
+                profileViewModel.addConsultation(consultation)
+                showConsultationDialog = false
+            }
+        )
+    }
 }
 
 @Composable
@@ -487,126 +490,126 @@ fun ConsultationCard(consultation: Consultation) {
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-//@Composable
-//fun AddConsultationDialog(
-//    onDismiss: () -> Unit,
-//    onAddConsultation: (String, String, String, String, Boolean, String) -> Unit
-//) {
-//    var disease by remember { mutableStateOf("") }
-//    var crop by remember { mutableStateOf("") }
-//    var treatment by remember { mutableStateOf("") }
-//    var seller by remember { mutableStateOf("") }
-//    var isSuccessful by remember { mutableStateOf(false) }
-//    var notes by remember { mutableStateOf("") }
-//
-//    Dialog(onDismissRequest = onDismiss) {
-//        Surface(
-//            shape = MaterialTheme.shapes.medium,
-//            color = MaterialTheme.colorScheme.surface
-//        ) {
-//            Column(
-//                modifier = Modifier
-//                    .padding(16.dp)
-//                    .fillMaxWidth()
-//            ) {
-//                Text(
-//                    text = "Add Consultation",
-//                    fontWeight = FontWeight.Bold,
-//                    fontSize = 18.sp
-//                )
-//
-//                Spacer(modifier = Modifier.height(16.dp))
-//
-//                OutlinedTextField(
-//                    value = disease,
-//                    onValueChange = { disease = it },
-//                    label = { Text("Disease") },
-//                    modifier = Modifier.fillMaxWidth()
-//                )
-//
-//                Spacer(modifier = Modifier.height(8.dp))
-//
-//                OutlinedTextField(
-//                    value = crop,
-//                    onValueChange = { crop = it },
-//                    label = { Text("Crop Affected") },
-//                    modifier = Modifier.fillMaxWidth()
-//                )
-//
-//                Spacer(modifier = Modifier.height(8.dp))
-//
-//                OutlinedTextField(
-//                    value = treatment,
-//                    onValueChange = { treatment = it },
-//                    label = { Text("Treatment Used") },
-//                    modifier = Modifier.fillMaxWidth()
-//                )
-//
-//                Spacer(modifier = Modifier.height(8.dp))
-//
-//                OutlinedTextField(
-//                    value = seller,
-//                    onValueChange = { seller = it },
-//                    label = { Text("Seller Name (Optional)") },
-//                    modifier = Modifier.fillMaxWidth()
-//                )
-//
-//                Spacer(modifier = Modifier.height(8.dp))
-//
-//                Row(
-//                    modifier = Modifier.fillMaxWidth(),
-//                    verticalAlignment = Alignment.CenterVertically
-//                ) {
-//                    Text("Treatment Successful?")
-//
-//                    Spacer(modifier = Modifier.weight(1f))
-//
-//                    Switch(
-//                        checked = isSuccessful,
-//                        onCheckedChange = { isSuccessful = it }
-//                    )
-//                }
-//
-//                Spacer(modifier = Modifier.height(8.dp))
-//
-//                OutlinedTextField(
-//                    value = notes,
-//                    onValueChange = { notes = it },
-//                    label = { Text("Additional Notes") },
-//                    modifier = Modifier.fillMaxWidth()
-//                )
-//
-//                Spacer(modifier = Modifier.height(16.dp))
-//
-//                Row(
-//                    modifier = Modifier.fillMaxWidth(),
-//                    horizontalArrangement = Arrangement.End
-//                ) {
-//                    TextButton(
-//                        onClick = onDismiss
-//                    ) {
-//                        Text("Cancel")
-//                    }
-//
-//                    Spacer(modifier = Modifier.width(8.dp))
-//
-//                    Button(
-//                        onClick = {
-//                            if (disease.isNotBlank() && crop.isNotBlank() && treatment.isNotBlank()) {
-//                                onAddConsultation(
-//                                    disease, crop, treatment, seller, isSuccessful, notes
-//                                )
-//                            }
-//                        },
-//                        enabled = disease.isNotBlank() && crop.isNotBlank() && treatment.isNotBlank()
-//                    ) {
-//                        Text("Add")
-//                    }
-//                }
-//            }
-//        }
-//    }
-//}
+@Composable
+fun AddConsultationDialog(
+    onDismiss: () -> Unit,
+    onAddConsultation: (String, String, String, String, Boolean, String) -> Unit
+) {
+    var disease by remember { mutableStateOf("") }
+    var crop by remember { mutableStateOf("") }
+    var treatment by remember { mutableStateOf("") }
+    var seller by remember { mutableStateOf("") }
+    var isSuccessful by remember { mutableStateOf(false) }
+    var notes by remember { mutableStateOf("") }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = MaterialTheme.shapes.medium,
+            color = MaterialTheme.colorScheme.surface
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth()
+            ) {
+                Text(
+                    text = "Add Consultation",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = disease,
+                    onValueChange = { disease = it },
+                    label = { Text("Disease") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = crop,
+                    onValueChange = { crop = it },
+                    label = { Text("Crop Affected") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = treatment,
+                    onValueChange = { treatment = it },
+                    label = { Text("Treatment Used") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = seller,
+                    onValueChange = { seller = it },
+                    label = { Text("Seller Name (Optional)") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Treatment Successful?")
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    Switch(
+                        checked = isSuccessful,
+                        onCheckedChange = { isSuccessful = it }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = notes,
+                    onValueChange = { notes = it },
+                    label = { Text("Additional Notes") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(
+                        onClick = onDismiss
+                    ) {
+                        Text("Cancel")
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Button(
+                        onClick = {
+                            if (disease.isNotBlank() && crop.isNotBlank() && treatment.isNotBlank()) {
+                                onAddConsultation(
+                                    disease, crop, treatment, seller, isSuccessful, notes
+                                )
+                            }
+                        },
+                        enabled = disease.isNotBlank() && crop.isNotBlank() && treatment.isNotBlank()
+                    ) {
+                        Text("Add")
+                    }
+                }
+            }
+        }
+    }
+}
 
 // Helper function to format dates
 private fun formatDate(date: Date): String {
