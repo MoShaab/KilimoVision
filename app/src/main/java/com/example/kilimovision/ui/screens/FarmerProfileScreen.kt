@@ -17,8 +17,11 @@ import com.example.kilimovision.model.User
 import com.example.kilimovision.viewmodel.ProfileViewModel
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import kotlinx.coroutines.launch
 import androidx.compose.ui.window.Dialog
+import com.example.kilimovision.R
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -70,14 +73,28 @@ fun FarmerProfileScreen(
                 title = { Text("Farmer Profile") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Text("←", fontSize = 24.sp)
+
+                        Icon(
+                            painter = painterResource(id = R.drawable.back_icon),
+                            contentDescription = "Arrow back",
+                            tint = Color.Black
+                        )
+
                     }
                 },
                 actions = {
                     if (!isEditing) {
-                        IconButton(onClick = { isEditing = true }) {
-                            Text("✎") // Edit icon
-                        }
+
+                            IconButton(onClick = { isEditing = true }) {
+
+                                Icon(
+                                    painter = painterResource(id = R.drawable.edit_icon),
+                                    contentDescription = "Edit icon",
+                                    tint = Color.Black
+                                )
+
+                            }
+
                     }
                 }
             )
@@ -183,7 +200,7 @@ fun FarmerProfileScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Divider()
+                    HorizontalDivider()
 
                     Spacer(modifier = Modifier.height(16.dp))
 

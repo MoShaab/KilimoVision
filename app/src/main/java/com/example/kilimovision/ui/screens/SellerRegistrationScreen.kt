@@ -218,6 +218,8 @@ fun SellerRegistrationScreen(
                                 businessName = businessName,
                                 businessAddress = address,
                                 region = selectedRegion,
+                                phone = phone,
+                                email = email,
                                 businessDescription = description,
                                 businessHours = "8:00 AM - 5:00 PM",  // Default value
                                 establishedYear = 2023,  // Default value

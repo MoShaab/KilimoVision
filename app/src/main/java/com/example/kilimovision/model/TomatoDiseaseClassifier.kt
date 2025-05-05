@@ -114,11 +114,15 @@ class TomatoDiseaseClassifier(context: Context) {
     fun classifyImage(context: Context, uri: Uri): Pair<String, Float>? {
         val bitmap = loadBitmapFromUri(context, uri) ?: return Pair(VALIDATION_FAILED, 0.0f)
 
-        // First validate if this is likely a tomato plant image
-//        val validator = ImageValidator()
-//        if (!validator.validateImage(bitmap)) {
-//            return Pair(NOT_A_PLANT, 0.0f)
-//        }
+        val validator = TomatoValidator(context)
+        val isTomato = validator.validate(bitmap)
+        validator.close()
+
+        if (!isTomato) {
+            return Pair(NOT_A_PLANT, 0.0f)
+        }
+
+
 
         val inputBuffer = preprocessBitmap(bitmap)
         val outputBuffer = Array(1) { FloatArray(labels.size) }

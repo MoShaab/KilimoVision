@@ -9,10 +9,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.kilimovision.R
 import com.example.kilimovision.model.Review
 import com.example.kilimovision.model.SellerProfile
 import com.example.kilimovision.model.User
@@ -76,13 +79,25 @@ fun SellerProfileScreen(
                 title = { Text("Seller Profile") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Text("←", fontSize = 24.sp)
+
+                        Icon(
+                            painter = painterResource(id = R.drawable.back_icon),
+                            contentDescription = "Arrow back",
+                            tint = Color.Black
+                        )
+
                     }
                 },
                 actions = {
                     if (!isEditing && selectedTabIndex == 0) {
-                        IconButton(onClick = { isEditing = true }) {
-                            Text("✎") // Edit icon
+                        IconButton(onClick = {isEditing = true}) {
+
+                            Icon(
+                                painter = painterResource(id = R.drawable.edit_icon),
+                                contentDescription = "Edit icon",
+                                tint = Color.Black
+                            )
+
                         }
                     }
                 }
@@ -248,7 +263,7 @@ fun SellerProfileScreen(
             }
         }
     }
-}
+};
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

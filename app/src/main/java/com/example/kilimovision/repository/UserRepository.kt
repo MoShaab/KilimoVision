@@ -1,5 +1,6 @@
 package com.example.kilimovision.repository
 
+import android.util.Log
 import com.example.kilimovision.model.*
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
@@ -296,6 +297,7 @@ class UserRepository {
                     verified = doc.getBoolean("verified") ?: false
                 )
             }
+
 
             emit(reviews)
         } catch (e: Exception) {

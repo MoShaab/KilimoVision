@@ -44,6 +44,8 @@ data class SellerProfile(
     val userId: String = "",
     val businessName: String = "",
     val businessAddress: String = "",
+    val phone: String = "",
+    val email: String = "",
     val region: String = "",
     val businessDescription: String = "",
     val businessHours: String = "8:00 AM - 5:00 PM",

@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await
 
+
 class FirebaseRepository {
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
@@ -267,6 +268,8 @@ class FirebaseRepository {
                 "businessName" to profile.businessName,
                 "businessAddress" to profile.businessAddress,
                 "region" to profile.region,
+                "phone" to profile.phone,
+                "email" to profile.email,
                 "businessDescription" to profile.businessDescription,
                 "businessHours" to profile.businessHours,
                 "establishedYear" to profile.establishedYear,
@@ -720,5 +723,60 @@ class FirebaseRepository {
             Log.e("FirebaseRepository", "Error getting disease treatment: ${e.message}")
             emit(null)
         }
+    }
+
+
+
+    // Add these functions to your main class or wherever appropriate
+    fun updateProductStock(productId: String, inStock: Boolean, onComplete: (Boolean) -> Unit) {
+        FirebaseFirestore.getInstance()
+            .collection("products")
+            .document(productId)
+            .update("inStock", inStock)
+            .addOnSuccessListener {
+                onComplete(true)
+            }
+            .addOnFailureListener {
+                onComplete(false)
+            }
+    }
+
+    fun deleteProduct(productId: String, onComplete: (Boolean) -> Unit) {
+        FirebaseFirestore.getInstance()
+            .collection("products")
+            .document(productId)
+            .delete()
+            .addOnSuccessListener {
+                onComplete(true)
+            }
+            .addOnFailureListener {
+                onComplete(false)
+            }
+    }
+
+    fun updateAdvertisementStatus(adId: String, status: String, onComplete: (Boolean) -> Unit) {
+        FirebaseFirestore.getInstance()
+            .collection("advertisements")
+            .document(adId)
+            .update("status", status)
+            .addOnSuccessListener {
+                onComplete(true)
+            }
+            .addOnFailureListener {
+                onComplete(false)
+            }
+    }
+
+    fun deleteAdvertisement(adId: String, onComplete: (Boolean) -> Unit) {
+        FirebaseFirestore.getInstance()
+            .collection("advertisements")
+            .document(adId)
+            .delete()
+            .addOnSuccessListener {
+                onComplete(true)
+            }
+            .addOnFailureListener {
+                onComplete(false)
+            }
     }
 }

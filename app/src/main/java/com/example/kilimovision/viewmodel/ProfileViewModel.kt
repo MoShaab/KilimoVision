@@ -95,7 +95,7 @@ class ProfileViewModel : ViewModel() {
     }
 
     // Load seller reviews
-    private fun loadSellerReviews(sellerId: String) {
+    fun loadSellerReviews(sellerId: String) {
         viewModelScope.launch {
             repository.getSellerReviews(sellerId).collect { reviews ->
                 _sellerReviews.value = reviews

@@ -6,15 +6,19 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.kilimovision.R
 import com.example.kilimovision.model.Advertisement
 import com.example.kilimovision.model.Seller
 import com.example.kilimovision.ui.components.AdvertisementCard
@@ -22,6 +26,8 @@ import com.example.kilimovision.ui.components.SellerCard
 import com.example.kilimovision.ui.components.SellerDetailsDialog
 import com.example.kilimovision.ui.components.DiseaseTreatmentInfo
 import com.example.kilimovision.viewmodel.SellerViewModel
+import com.example.kilimovision.viewmodel.ProfileViewModel
+
 
 @Composable
 fun AgroSellerScreen(
@@ -30,6 +36,9 @@ fun AgroSellerScreen(
     sellerViewModel: SellerViewModel = viewModel()
 ) {
     val context = LocalContext.current
+    var profileViewModel = ProfileViewModel()
+
+
     var selectedSeller by remember { mutableStateOf<Seller?>(null) }
 
     // Fetch data from Firebase
@@ -59,8 +68,13 @@ fun AgroSellerScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBackPressed) {
-                // Back arrow icon
-                Text("←", fontSize = 24.sp)
+
+                    Icon(
+                        painter = painterResource(id = R.drawable.back_icon),
+                        contentDescription = "Arrow back",
+                        tint = Color.Black
+                    )
+
             }
             Text(
                 text = "Treatment Solutions",
@@ -112,7 +126,7 @@ fun AgroSellerScreen(
             advertisements.forEach { ad ->
                 AdvertisementCard(
                     advertisement = ad,
-                    onClick = { /* Handle ad click */ }
+                    onClick = {  }
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
@@ -137,6 +151,7 @@ fun AgroSellerScreen(
             ) {
                 CircularProgressIndicator()
             }
+
         } else if (error != null) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -172,6 +187,8 @@ fun AgroSellerScreen(
                         onClick = { selectedSeller = seller }
                     )
                 }
+
+
             }
         }
     }
@@ -180,6 +197,7 @@ fun AgroSellerScreen(
     if (selectedSeller != null) {
         SellerDetailsDialog(
             seller = selectedSeller!!,
+            profileViewModel = profileViewModel,
             onDismiss = { selectedSeller = null }
         )
     }

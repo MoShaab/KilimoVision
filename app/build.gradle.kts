@@ -49,6 +49,8 @@ android {
 }
 
 dependencies {
+    implementation ("androidx.compose.material:material-icons-extended:")
+
     // Maps and Location
     implementation("com.google.android.gms:play-services-location:21.0.1")
     implementation("com.google.android.gms:play-services-maps:18.2.0")
@@ -67,6 +69,7 @@ dependencies {
 
     // Image loading
     implementation("io.coil-kt:coil-compose:2.5.0")
+    implementation("com.github.CanHub:Android-Image-Cropper:4.3.2")
 
     // Networking
     implementation(libs.volley)

@@ -86,7 +86,7 @@ fun AdvertisementCard(
                     )
 
                     Text(
-                        text = "Learn More",
+                        text = "View Seller",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium
