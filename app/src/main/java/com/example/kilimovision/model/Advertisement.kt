@@ -13,6 +13,7 @@ data class Advertisement(
     val endDate: Timestamp? = null,
     val status: String = "", // pending, active, expired
     val impressions: Int = 0,
+    val price: Double = 0.0,
     val clicks: Int = 0,
     val plan: String = "", // premium, standard, basic
     val cost: Double = 0.0,

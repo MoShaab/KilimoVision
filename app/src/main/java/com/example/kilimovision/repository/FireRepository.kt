@@ -479,6 +479,7 @@ class FirebaseRepository {
     suspend fun createAdvertisement(
         sellerId: String,
         title: String,
+        price: Double,
         description: String,
         imageUrl: String,
         targetDiseases: List<String>,

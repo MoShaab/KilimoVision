@@ -40,6 +40,7 @@ class AdvertisementViewModel : ViewModel() {
         sellerId: String,
         title: String,
         description: String,
+        price: Double,
         imageUrl: String,
         targetDiseases: List<String>,
         durationDays: Int,
@@ -63,6 +64,7 @@ class AdvertisementViewModel : ViewModel() {
                 val result = repository.createAdvertisement(
                     sellerId = sellerId,
                     title = title,
+                    price = price,
                     description = description,
                     imageUrl = imageUrl,
                     targetDiseases = targetDiseases,

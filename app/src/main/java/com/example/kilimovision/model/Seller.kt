@@ -15,6 +15,7 @@ data class Seller(
     val description: String = "",
     val profilePicture: String = "",
     val rating: Double = 0.0,
+    val reviewCount: Int = 0,
     val verified: Boolean = false,
     val createdAt: Timestamp? = null,
     val subscription: SellerSubscription? = null,

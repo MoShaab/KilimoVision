@@ -38,6 +38,7 @@ fun CreateAdvertisementScreen(
 
     // State for form fields
     var title by remember { mutableStateOf("") }
+    var price by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var imageUrl by remember { mutableStateOf("") } // In a real app, implement image upload
     val selectedDiseases = remember { mutableStateListOf<String>() }
@@ -133,6 +134,25 @@ fun CreateAdvertisementScreen(
                 .fillMaxWidth()
                 .height(120.dp),
             maxLines = 5
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Price field
+        OutlinedTextField(
+            value = price,
+            onValueChange = {
+                // Only allow digits and decimal point
+                if (it.isEmpty() || it.matches(Regex("^\\d*\\.?\\d*\$"))) {
+                    price = it
+                }
+            },
+            label = { Text("Price (KES)") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            singleLine = true
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -267,6 +287,7 @@ fun CreateAdvertisementScreen(
                 advertisementViewModel.createAdvertisement(
                     sellerId = sellerId,
                     title = title,
+                    price = price.toDoubleOrNull() ?: 0.0,
                     description = description,
                     imageUrl = imageUrl.ifBlank { "https://via.placeholder.com/300" },
                     targetDiseases = selectedDiseases,

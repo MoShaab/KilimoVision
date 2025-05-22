@@ -1,4 +1,3 @@
-
 package com.example.kilimovision.ui.components
 
 import androidx.compose.foundation.layout.*
@@ -23,7 +22,9 @@ import androidx.compose.material.icons.outlined.Star
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import com.example.kilimovision.R
 import com.google.firebase.Timestamp
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -32,10 +33,9 @@ import java.util.Locale
 @Composable
 fun SellerDetailsDialog(
     seller: Seller,
-    profileViewModel: ProfileViewModel, // Add this parameter
+    profileViewModel: ProfileViewModel,
     onDismiss: () -> Unit
 ) {
-
     // Properly collect StateFlow as State
     val reviews by profileViewModel.sellerReviews.collectAsState()
 
@@ -96,6 +96,9 @@ fun SellerDetailsDialog(
                     Text("No reviews yet", style = MaterialTheme.typography.bodyMedium)
                 } else {
                     reviews.forEach { review ->
+                        // Debug print to check the actual rating value
+                        // Log.d("SellerDetails", "Review rating: ${review.rating}")
+
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -103,14 +106,21 @@ fun SellerDetailsDialog(
                         ) {
                             Column(modifier = Modifier.padding(8.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    // Display star rating
+                                    // Display star rating - ensuring we use the correct rating value
                                     Row {
+                                        // Explicitly convert rating to Int if needed
+                                        val starRating = review.rating.toInt()
+
                                         for (i in 1..5) {
                                             Icon(
-                                                imageVector = if (i <= review.rating) Icons.Filled.Star else Icons.Outlined.Star,
-                                                contentDescription = null,
+                                                contentDescription = "Rating star",
+
+                                                imageVector = if (i <= starRating) Icons.Filled.Star else Icons.Outlined.Star,
                                                 modifier = Modifier.size(16.dp),
-                                                tint = MaterialTheme.colorScheme.primary
+                                                tint = if (i <= starRating)
+                                                    Color(0xFFFFC107)
+                                                else
+                                                    Color.LightGray
                                             )
                                         }
                                     }
@@ -200,7 +210,10 @@ fun ReviewDialog(
                             Icon(
                                 imageVector = if (i <= rating) Icons.Filled.Star else Icons.Outlined.Star,
                                 contentDescription = "Star $i",
-                                tint = if (i <= rating) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = if (i <= rating)
+                                    MaterialTheme.colorScheme.primary
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
